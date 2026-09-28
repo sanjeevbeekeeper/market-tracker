@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Market</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥕</text></svg>">
+<link rel="stylesheet" href="styles.css">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+<div id="app">
+
+  <header class="top">
+    <h1 id="pageTitle">Home</h1>
+    <div class="sub" id="pageSub"></div>
+  </header>
+
+  <main>
+    <!-- HOME VIEW (checkoff only, the started trip) -->
+    <section class="view active" id="view-home">
+      <div id="homeWrap"></div>
+    </section>
+
+    <!-- TRIPS VIEW (create trips, add items, start, finish) -->
+    <section class="view" id="view-trips">
+      <div class="card sync-bar">
+        <div class="sync-bar-row">
+          <div>
+            <div class="sync-bar-title" id="syncBarTitle">Checking…</div>
+            <div class="sync-bar-sub" id="syncBarSub"></div>
+          </div>
+          <button class="small-btn" id="syncPushBtn">Push to repo</button>
+        </div>
+      </div>
+      <div class="sync-settings-link"><button class="text-btn" id="openGithubSettingsBtn">GitHub settings</button></div>
+      <button class="primary add-trip-btn" id="openAddTripBtn">+ New trip</button>
+      <div id="tripsWrap"></div>
+    </section>
+
+    <!-- CATALOG VIEW (vegetables only) -->
+    <section class="view" id="view-catalog">
+      <div class="catalog-add-bar">
+        <div class="row-inline">
+          <input type="text" id="vegSearchEn" placeholder="Search or add (English)" maxlength="40">
+          <input type="text" id="vegSearchTa" placeholder="Tamil — optional" maxlength="40">
+          <button id="vegAddBtn">Add</button>
+        </div>
+        <div class="search-status" id="vegSearchStatus"></div>
+      </div>
+      <div class="card" id="vegListWrap"></div>
+    </section>
+
+    <!-- MARKET VIEW -->
+    <section class="view" id="view-market">
+      <div class="section-label">Markets</div>
+      <div class="card" id="marketListWrap"></div>
+      <div class="row-inline card" style="margin-top:12px;">
+        <input type="text" id="newMarketInput" placeholder="Market name" maxlength="40">
+        <select id="newMarketDay" class="weekday-select">
+          <option value="">Any day</option>
+          <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+          <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+        </select>
+        <button id="newMarketBtn">Add</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <div class="tabbar-inner">
+      <button class="tab active" data-tab="home"><span class="ic">🛒</span>Home</button>
+      <button class="tab" data-tab="trips"><span class="ic">🗂️</span>Trip</button>
+      <button class="tab" data-tab="catalog"><span class="ic">📋</span>Catalog</button>
+      <button class="tab" data-tab="market"><span class="ic">📍</span>Market</button>
+    </div>
+  </nav>
+</div>
+
+<!-- Add trip sheet -->
+<div class="sheet-backdrop" id="addTripBackdrop">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>New trip</h2>
+    <div class="hint">Add items to it below, then hit Start when you're ready to shop.</div>
+    <div class="sheet-body">
+      <div class="field"><label class="field-label">Market</label><select id="tripMarketSelect"></select></div>
+      <div class="field"><label class="field-label">Date</label><input type="date" id="tripDateInput"></div>
+      <button class="primary" id="addTripConfirmBtn">Add trip</button>
+      <div style="text-align:center; margin-top:12px;">
+        <button class="text-btn" id="addTripCancelBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Purchase modal (Home only) -->
+<div class="sheet-backdrop" id="purchaseBackdrop">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="purchaseTitle">Item</h2>
+    <div class="sheet-body">
+      <div class="unit-toggle" id="purchaseUnitToggle">
+        <button type="button" data-unit="g">Grams</button>
+        <button type="button" data-unit="rupee">₹ amount</button>
+        <button type="button" data-unit="piece">Pieces</button>
+      </div>
+      <div class="field">
+        <label class="field-label" id="purchaseQtyLabel">Quantity</label>
+        <input type="number" id="purchaseQty" inputmode="decimal" placeholder="e.g. 250" min="0">
+      </div>
+      <div class="field">
+        <label class="field-label">Amount paid (₹) <span class="required-mark">*</span></label>
+        <input type="number" id="purchaseAmount" inputmode="decimal" placeholder="What you actually paid" min="0">
+      </div>
+      <div class="field">
+        <label class="field-label">Actual weight given (optional)</label>
+        <input type="number" id="purchaseActualWeight" inputmode="decimal" placeholder="e.g. 260, if vendor gave extra">
+      </div>
+      <button class="primary" id="purchaseConfirmBtn">Mark purchased</button>
+      <div style="text-align:center; margin-top:12px;">
+        <button class="text-btn" id="purchaseCancelBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GitHub sync settings -->
+<div class="sheet-backdrop" id="githubSettingsBackdrop">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>GitHub sync</h2>
+    <div class="hint">Stored only on this phone, used to push your data to your private repo.</div>
+    <div class="sheet-body">
+      <div class="field"><label class="field-label">GitHub username</label><input type="text" id="ghOwner" placeholder="e.g. yourusername" autocomplete="off"></div>
+      <div class="field"><label class="field-label">Repository name</label><input type="text" id="ghRepo" placeholder="e.g. market-tracker-data" autocomplete="off"></div>
+      <div class="field"><label class="field-label">Personal access token</label><input type="text" id="ghToken" placeholder="ghp_..." autocomplete="off"></div>
+      <button class="primary" id="ghSaveBtn">Save</button>
+      <div style="text-align:center; margin-top:12px;">
+        <button class="text-btn" id="ghCancelBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js" defer></script>
+</body>
+</html>
