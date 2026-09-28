@@ -24,15 +24,6 @@
 
     <!-- TRIPS VIEW (create trips, add items, start, finish) -->
     <section class="view" id="view-trips">
-      <div class="card sync-bar">
-        <div class="sync-bar-row">
-          <div>
-            <div class="sync-bar-title" id="syncBarTitle">Checking…</div>
-            <div class="sync-bar-sub" id="syncBarSub"></div>
-          </div>
-          <button class="small-btn" id="syncPushBtn">Push to repo</button>
-        </div>
-      </div>
       <button class="primary add-trip-btn" id="openAddTripBtn">+ New trip</button>
       <div id="tripsWrap"></div>
     </section>
@@ -66,7 +57,16 @@
     </section>
     <!-- SETTINGS VIEW -->
     <section class="view" id="view-settings">
-      <div class="section-label">GitHub sync</div>
+      <div class="card sync-bar">
+        <div class="sync-bar-row">
+          <div>
+            <div class="sync-bar-title" id="syncBarTitle">Checking…</div>
+            <div class="sync-bar-sub" id="syncBarSub"></div>
+          </div>
+          <button class="small-btn" id="syncPushBtn">Push to repo</button>
+        </div>
+      </div>
+      <div class="section-label">GitHub connection</div>
       <div class="card" style="padding:18px;">
         <div class="sync-bar-sub" id="ghStatus" style="margin:0 0 16px;"></div>
         <div class="field"><label class="field-label">GitHub username</label><input type="text" id="ghOwner" placeholder="e.g. yourusername" autocomplete="off"></div>
@@ -85,7 +85,7 @@
       <button class="tab" data-tab="trips"><span class="ic">🗂️</span>Trip</button>
       <button class="tab" data-tab="catalog"><span class="ic">📋</span>Catalog</button>
       <button class="tab" data-tab="market"><span class="ic">📍</span>Market</button>
-      <button class="tab" data-tab="settings"><span class="ic">⚙️</span>Settings</button>
+      <button class="tab" data-tab="settings"><span class="ic" style="position:relative;">⚙️<span id="settingsDot" style="display:none;position:absolute;top:-1px;right:-5px;width:9px;height:9px;border-radius:50%;background:#D64545;border:1.5px solid #fff;"></span></span>Settings</button>
     </div>
   </nav>
 </div>

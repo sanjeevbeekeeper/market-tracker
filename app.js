@@ -644,9 +644,10 @@
   function renderSyncBar(){
     var cfg = loadGithubConfig();
     var pending = state.pendingChanges.length;
+    document.getElementById("settingsDot").style.display = pending > 0 ? "block" : "none";
     if(!cfg){
       syncBarTitle.textContent = "GitHub not connected";
-      syncBarSub.textContent = "Connect it in the Settings tab";
+      syncBarSub.textContent = "Fill in the connection details below";
     } else if(pending > 0){
       syncBarTitle.textContent = pending + " offline change" + (pending === 1 ? "" : "s");
       syncBarSub.textContent = "Not pushed yet — push once you're back online";
@@ -702,7 +703,7 @@
 
   syncPushBtn.addEventListener("click", function(){
     var cfg = loadGithubConfig();
-    if(!cfg){ document.querySelector('.tab[data-tab="settings"]').click(); return; }
+    if(!cfg){ alert("Connect GitHub first: fill in the details below and tap Save."); ghOwnerEl.focus(); return; }
     if(state.pendingChanges.length === 0){ alert("Nothing to sync — you're up to date."); return; }
 
     syncPushBtn.disabled = true;
@@ -742,7 +743,7 @@
       views[tab.dataset.tab].classList.add("active");
       document.getElementById("pageTitle").textContent = titles[tab.dataset.tab];
       if(tab.dataset.tab === "home") renderHome();
-      else if(tab.dataset.tab === "trips"){ pageSub.textContent = "All your trips"; renderSyncBar(); renderTrips(); }
+      else if(tab.dataset.tab === "trips"){ pageSub.textContent = "All your trips"; renderTrips(); }
       else if(tab.dataset.tab === "catalog"){ pageSub.textContent = "Search or add a vegetable"; renderCatalog(); }
       else if(tab.dataset.tab === "market"){ pageSub.textContent = "Where you shop"; renderMarkets(); }
       else { pageSub.textContent = "Sync & connection"; renderSettings(); }

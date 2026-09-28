@@ -1,5 +1,5 @@
 // Bump this when app.js / styles.css / index.html change, so old caches get replaced.
-var CACHE_NAME = "market-tracker-v3";
+var CACHE_NAME = "market-tracker-v4";
 var CORE_ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.json"];
 
 self.addEventListener("install", function(event){
