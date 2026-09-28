@@ -1,5 +1,5 @@
 // Bump this when app.js / styles.css / index.html change, so old caches get replaced.
-var CACHE_NAME = "market-tracker-v4";
+var CACHE_NAME = "market-tracker-v6";
 var CORE_ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.json"];
 
 self.addEventListener("install", function(event){
@@ -12,7 +12,10 @@ self.addEventListener("install", function(event){
             if(!res.ok) throw new Error("Failed to cache " + url);
             return cache.put(url, res);
           });
-        }));
+        })).then(function(){
+          // remember when this version was fetched, so the app's Update log can show it
+          return cache.put("./__meta", new Response(JSON.stringify({ installedAt: Date.now() })));
+        });
       })
       .then(function(){ return self.skipWaiting(); })
   );
@@ -49,4 +52,16 @@ self.addEventListener("fetch", function(event){
       return cached || networkFetch;
     })
   );
+});
+
+// The app asks which version is installed (and when it was fetched) for the Update log.
+self.addEventListener("message", function(event){
+  if(!event.data || event.data.type !== "GET_VERSION" || !event.ports || !event.ports[0]) return;
+  var port = event.ports[0];
+  var version = CACHE_NAME.replace("market-tracker-", "");
+  caches.open(CACHE_NAME)
+    .then(function(cache){ return cache.match("./__meta"); })
+    .then(function(res){ return res ? res.json() : {}; })
+    .catch(function(){ return {}; })
+    .then(function(meta){ port.postMessage({ version: version, installedAt: meta.installedAt || null }); });
 });

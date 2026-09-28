@@ -51,6 +51,20 @@
     renderSyncBar();
   }
 
+  // Trips point at catalog items and markets by id. Names are re-read from them,
+  // so fixing a typo in the Catalog or Market tab fixes it everywhere (old trips included).
+  // If an item or market was deleted, the last known name stays as a fallback.
+  function refreshNamesFromCatalog(){
+    state.trips.forEach(function(t){
+      var m = state.markets.find(function(x){ return x.id === t.marketId; });
+      if(m) t.marketName = m.name;
+      t.items.forEach(function(it){
+        var v = state.catalog.find(function(c){ return c.id === it.vegId; });
+        if(v){ it.name = v.name; it.nameTamil = v.nameTamil || ""; }
+      });
+    });
+  }
+
   function getOpenTrip(){ return state.trips.find(function(t){ return t.status === "open"; }); }
   function tripTotal(trip){
     return trip.items.reduce(function(sum,it){ return sum + (it.purchased ? Number(it.amountPaid||0) : 0); }, 0);
@@ -248,6 +262,7 @@
           veg.name = nv;
           veg.nameTamil = erow.querySelector(".ev-tamil").value.trim();
           editingVegId = null;
+          refreshNamesFromCatalog();
           save();
           queueChange("catalog_edit", { id: veg.id, name: veg.name, nameTamil: veg.nameTamil });
           renderCatalog();
@@ -322,6 +337,7 @@
             m.name = nv;
             m.weekday = emrow.querySelector(".em-day").value;
             editingMarketId = null;
+            refreshNamesFromCatalog();
             save();
             queueChange("market_edit", { id: m.id, name: m.name, weekday: m.weekday });
             renderMarkets(); renderHome(); renderTrips();
@@ -732,7 +748,8 @@
     trips: document.getElementById("view-trips"),
     catalog: document.getElementById("view-catalog"),
     market: document.getElementById("view-market"),
-    settings: document.getElementById("view-settings")
+    settings: document.getElementById("view-settings"),
+    log: document.getElementById("view-log")
   };
   var titles = { home: "Home", trips: "Trip", catalog: "Catalog", market: "Market", settings: "Settings" };
   tabs.forEach(function(tab){
@@ -750,18 +767,117 @@
     });
   });
 
+  // ================= UPDATE LOG =================
+  // Records each new app version this phone picks up (kept separate from your data, never pushed).
+  var UPDATE_LOG_KEY = "marketTrackerUpdateLog";
+  function loadUpdateLog(){
+    try{ return JSON.parse(localStorage.getItem(UPDATE_LOG_KEY)) || []; }catch(e){ return []; }
+  }
+  function saveUpdateLog(log){
+    try{ localStorage.setItem(UPDATE_LOG_KEY, JSON.stringify(log.slice(0, 50))); }catch(e){}
+  }
+  function fmtLogTime(ts){
+    var d = new Date(ts);
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var date = d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear();
+    var h = d.getHours(), m = String(d.getMinutes()).padStart(2, "0");
+    var ap = h >= 12 ? "pm" : "am";
+    h = h % 12 || 12;
+    return date + ", " + h + ":" + m + ap;
+  }
+  function recordVersion(info){
+    if(!info || !info.version) return;
+    var log = loadUpdateLog();
+    if(log.length && log[0].version === info.version) return;
+    log.unshift({ version: info.version, ts: info.installedAt || Date.now() });
+    saveUpdateLog(log);
+    renderLog();
+  }
+
+  var logCurrent = document.getElementById("logCurrent");
+  var logLastFetched = document.getElementById("logLastFetched");
+  var logList = document.getElementById("logList");
+  var logPreview = document.getElementById("logPreview");
+  var logCheckStatus = document.getElementById("logCheckStatus");
+
+  function renderLog(){
+    var log = loadUpdateLog();
+    if(!log.length){
+      logCurrent.textContent = "Not recorded yet";
+      logLastFetched.textContent = "Open the app online once and it will appear here.";
+      logPreview.textContent = "No updates recorded yet";
+      logList.innerHTML = '<div class="empty-note">No history yet.</div>';
+      return;
+    }
+    logCurrent.textContent = log[0].version;
+    logLastFetched.textContent = "Last fetched on " + fmtLogTime(log[0].ts);
+    logPreview.textContent = log[0].version + " · fetched " + fmtLogTime(log[0].ts);
+    logList.innerHTML = "";
+    log.forEach(function(entry, i){
+      var row = document.createElement("div");
+      row.className = "list-row";
+      row.innerHTML = '<div><div class="lname"></div><div class="lsub"></div></div>' + (i === 0 ? '<span class="badge closed">Current</span>' : "");
+      row.querySelector(".lname").textContent = entry.version;
+      row.querySelector(".lsub").textContent = "Fetched on " + fmtLogTime(entry.ts);
+      logList.appendChild(row);
+    });
+  }
+
+  document.getElementById("openLogBtn").addEventListener("click", function(){
+    Object.keys(views).forEach(function(k){ views[k].classList.remove("active"); });
+    views.log.classList.add("active");
+    document.getElementById("pageTitle").textContent = "Update log";
+    pageSub.textContent = "Which version this phone has";
+    logCheckStatus.textContent = "";
+    renderLog();
+  });
+  document.getElementById("logBackBtn").addEventListener("click", function(){
+    document.querySelector('.tab[data-tab="settings"]').click();
+  });
+
+  document.getElementById("logCheckBtn").addEventListener("click", function(){
+    if(!("serviceWorker" in navigator)){ logCheckStatus.textContent = "Updates aren't supported in this browser."; return; }
+    logCheckStatus.textContent = "Checking…";
+    navigator.serviceWorker.getRegistration()
+      .then(function(reg){
+        if(!reg) throw new Error("no registration");
+        return reg.update().then(function(){ return reg; });
+      })
+      .then(function(reg){
+        logCheckStatus.textContent = (reg.installing || reg.waiting)
+          ? "Update found and installing. Close and reopen the app to use it."
+          : "You're on the latest version.";
+      })
+      .catch(function(){ logCheckStatus.textContent = "Couldn't check. Are you online?"; });
+  });
+
   // ---- service worker (offline caching) ----
+  function askSwVersion(reg){
+    var sw = reg && reg.active;
+    if(!sw) return;
+    var channel = new MessageChannel();
+    channel.port1.onmessage = function(e){ recordVersion(e.data); };
+    sw.postMessage({ type: "GET_VERSION" }, [channel.port2]);
+  }
   if("serviceWorker" in navigator){
     window.addEventListener("load", function(){
       navigator.serviceWorker.register("sw.js").catch(function(e){ console.error("Service worker registration failed", e); });
     });
+    navigator.serviceWorker.ready.then(askSwVersion);
+    // a new version just took over while the app was open
+    navigator.serviceWorker.addEventListener("controllerchange", function(){
+      navigator.serviceWorker.getRegistration().then(askSwVersion);
+    });
   }
 
   // ---- init ----
+  refreshNamesFromCatalog();
+  save();
   renderHome();
   renderCatalog();
   renderMarkets();
   renderTrips();
   renderSyncBar();
   renderSettings();
+  renderLog();
 })();
