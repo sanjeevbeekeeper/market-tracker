@@ -646,7 +646,7 @@
     var pending = state.pendingChanges.length;
     if(!cfg){
       syncBarTitle.textContent = "GitHub not connected";
-      syncBarSub.textContent = "Tap \"GitHub settings\" below to connect";
+      syncBarSub.textContent = "Connect it in the Settings tab";
     } else if(pending > 0){
       syncBarTitle.textContent = pending + " offline change" + (pending === 1 ? "" : "s");
       syncBarSub.textContent = "Not pushed yet — push once you're back online";
@@ -656,25 +656,36 @@
     }
   }
 
-  var githubSettingsBackdrop = document.getElementById("githubSettingsBackdrop");
-  document.getElementById("openGithubSettingsBtn").addEventListener("click", openGithubSettings);
-  function openGithubSettings(){
-    var cfg = loadGithubConfig() || {};
-    document.getElementById("ghOwner").value = cfg.owner || "";
-    document.getElementById("ghRepo").value = cfg.repo || "";
-    document.getElementById("ghToken").value = cfg.token || "";
-    githubSettingsBackdrop.classList.add("open");
+  // ---- Settings page (GitHub details) ----
+  var ghOwnerEl = document.getElementById("ghOwner");
+  var ghRepoEl = document.getElementById("ghRepo");
+  var ghTokenEl = document.getElementById("ghToken");
+  var ghStatus = document.getElementById("ghStatus");
+  var ghDisconnectBtn = document.getElementById("ghDisconnectBtn");
+
+  function renderSettings(){
+    var cfg = loadGithubConfig();
+    ghOwnerEl.value = cfg ? cfg.owner : "";
+    ghRepoEl.value = cfg ? cfg.repo : "";
+    ghTokenEl.value = cfg ? cfg.token : "";
+    ghStatus.textContent = cfg ? ("Connected to " + cfg.owner + "/" + cfg.repo) : "Not connected yet";
+    ghDisconnectBtn.style.display = cfg ? "" : "none";
   }
-  document.getElementById("ghCancelBtn").addEventListener("click", function(){ githubSettingsBackdrop.classList.remove("open"); });
-  githubSettingsBackdrop.addEventListener("click", function(e){ if(e.target === githubSettingsBackdrop) githubSettingsBackdrop.classList.remove("open"); });
   document.getElementById("ghSaveBtn").addEventListener("click", function(){
-    var owner = document.getElementById("ghOwner").value.trim();
-    var repo = document.getElementById("ghRepo").value.trim();
-    var token = document.getElementById("ghToken").value.trim();
+    var owner = ghOwnerEl.value.trim();
+    var repo = ghRepoEl.value.trim();
+    var token = ghTokenEl.value.trim();
     if(!owner || !repo || !token){ alert("Fill in all three fields."); return; }
     saveGithubConfig({ owner: owner, repo: repo, token: token });
-    githubSettingsBackdrop.classList.remove("open");
+    renderSettings();
     renderSyncBar();
+  });
+  ghDisconnectBtn.addEventListener("click", function(){
+    if(confirm("Disconnect GitHub? Your unpushed changes stay on this phone.")){
+      try{ localStorage.removeItem(GH_CONFIG_KEY); }catch(e){}
+      renderSettings();
+      renderSyncBar();
+    }
   });
 
   // sync.js is only fetched the first time a push actually happens — keeps the normal offline app lean.
@@ -691,7 +702,7 @@
 
   syncPushBtn.addEventListener("click", function(){
     var cfg = loadGithubConfig();
-    if(!cfg){ openGithubSettings(); return; }
+    if(!cfg){ document.querySelector('.tab[data-tab="settings"]').click(); return; }
     if(state.pendingChanges.length === 0){ alert("Nothing to sync — you're up to date."); return; }
 
     syncPushBtn.disabled = true;
@@ -719,9 +730,10 @@
     home: document.getElementById("view-home"),
     trips: document.getElementById("view-trips"),
     catalog: document.getElementById("view-catalog"),
-    market: document.getElementById("view-market")
+    market: document.getElementById("view-market"),
+    settings: document.getElementById("view-settings")
   };
-  var titles = { home: "Home", trips: "Trip", catalog: "Catalog", market: "Market" };
+  var titles = { home: "Home", trips: "Trip", catalog: "Catalog", market: "Market", settings: "Settings" };
   tabs.forEach(function(tab){
     tab.addEventListener("click", function(){
       tabs.forEach(function(t){ t.classList.remove("active"); });
@@ -732,7 +744,8 @@
       if(tab.dataset.tab === "home") renderHome();
       else if(tab.dataset.tab === "trips"){ pageSub.textContent = "All your trips"; renderSyncBar(); renderTrips(); }
       else if(tab.dataset.tab === "catalog"){ pageSub.textContent = "Search or add a vegetable"; renderCatalog(); }
-      else { pageSub.textContent = "Where you shop"; renderMarkets(); }
+      else if(tab.dataset.tab === "market"){ pageSub.textContent = "Where you shop"; renderMarkets(); }
+      else { pageSub.textContent = "Sync & connection"; renderSettings(); }
     });
   });
 
@@ -749,4 +762,5 @@
   renderMarkets();
   renderTrips();
   renderSyncBar();
+  renderSettings();
 })();

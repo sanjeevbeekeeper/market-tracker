@@ -33,7 +33,6 @@
           <button class="small-btn" id="syncPushBtn">Push to repo</button>
         </div>
       </div>
-      <div class="sync-settings-link"><button class="text-btn" id="openGithubSettingsBtn">GitHub settings</button></div>
       <button class="primary add-trip-btn" id="openAddTripBtn">+ New trip</button>
       <div id="tripsWrap"></div>
     </section>
@@ -65,6 +64,19 @@
         <button id="newMarketBtn">Add</button>
       </div>
     </section>
+    <!-- SETTINGS VIEW -->
+    <section class="view" id="view-settings">
+      <div class="section-label">GitHub sync</div>
+      <div class="card" style="padding:18px;">
+        <div class="sync-bar-sub" id="ghStatus" style="margin:0 0 16px;"></div>
+        <div class="field"><label class="field-label">GitHub username</label><input type="text" id="ghOwner" placeholder="e.g. yourusername" autocomplete="off"></div>
+        <div class="field"><label class="field-label">Repository name</label><input type="text" id="ghRepo" placeholder="e.g. market-data-tracker" autocomplete="off"></div>
+        <div class="field"><label class="field-label">Personal access token</label><input type="password" id="ghToken" placeholder="github_pat_..." autocomplete="off"></div>
+        <button class="primary" id="ghSaveBtn">Save</button>
+        <div style="text-align:center; margin-top:12px;"><button class="text-btn danger" id="ghDisconnectBtn">Disconnect</button></div>
+      </div>
+      <div class="sync-bar-sub" style="margin:10px 4px 0;">Stored only on this phone. Never sent anywhere except GitHub.</div>
+    </section>
   </main>
 
   <nav class="tabbar">
@@ -73,6 +85,7 @@
       <button class="tab" data-tab="trips"><span class="ic">🗂️</span>Trip</button>
       <button class="tab" data-tab="catalog"><span class="ic">📋</span>Catalog</button>
       <button class="tab" data-tab="market"><span class="ic">📍</span>Market</button>
+      <button class="tab" data-tab="settings"><span class="ic">⚙️</span>Settings</button>
     </div>
   </nav>
 </div>
@@ -120,24 +133,6 @@
       <button class="primary" id="purchaseConfirmBtn">Mark purchased</button>
       <div style="text-align:center; margin-top:12px;">
         <button class="text-btn" id="purchaseCancelBtn">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- GitHub sync settings -->
-<div class="sheet-backdrop" id="githubSettingsBackdrop">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <h2>GitHub sync</h2>
-    <div class="hint">Stored only on this phone, used to push your data to your private repo.</div>
-    <div class="sheet-body">
-      <div class="field"><label class="field-label">GitHub username</label><input type="text" id="ghOwner" placeholder="e.g. yourusername" autocomplete="off"></div>
-      <div class="field"><label class="field-label">Repository name</label><input type="text" id="ghRepo" placeholder="e.g. market-tracker-data" autocomplete="off"></div>
-      <div class="field"><label class="field-label">Personal access token</label><input type="text" id="ghToken" placeholder="ghp_..." autocomplete="off"></div>
-      <button class="primary" id="ghSaveBtn">Save</button>
-      <div style="text-align:center; margin-top:12px;">
-        <button class="text-btn" id="ghCancelBtn">Cancel</button>
       </div>
     </div>
   </div>
